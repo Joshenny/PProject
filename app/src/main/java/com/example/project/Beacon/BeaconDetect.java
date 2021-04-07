@@ -99,8 +99,6 @@ public class BeaconDetect extends AppCompatActivity implements BeaconConsumer{
         }
 
         private void permission() {
-
-
             if (ContextCompat.checkSelfPermission(BeaconDetect.this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED){
                 if (
                         ActivityCompat.shouldShowRequestPermissionRationale(BeaconDetect.this, Manifest.permission.ACCESS_FINE_LOCATION)){
