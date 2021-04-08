@@ -8,41 +8,16 @@ public class Userdata {
     private String majors;
     private String uuid;
     private String date;
-    private String latitude;
-    private String longitude;
-    private String LatLng;
 
-
-    public Userdata(String minors, String distances, String majors, String uuid, String date, String latitude,String longitude, String LatLng){
+    public Userdata(String minors, String distances, String majors, String uuid, String date){
         this.minors=minors;
         this.distances=distances;
         this.majors=majors;
         this.uuid=uuid;
         this.date=date;
-       this.latitude=latitude;
-       this.longitude=longitude;
-       this.LatLng=LatLng;
     }
 
     public Userdata(){}
-
-    public String getLatLng(){return LatLng; }
-
-    public void setLatLng(String LatLng){
-        this.LatLng=LatLng;
-    }
-
-    public String getLatitude(){return latitude; }
-
-    public void setLatitude(String latitude){
-        this.latitude=latitude;
-    }
-
-    public String getLongitude(){return longitude; }
-
-    public void setLongitude(String longitude){
-        this.longitude=longitude;
-    }
 
     public String getMinors(){
         return minors;

@@ -10,10 +10,13 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import android.Manifest;
 import android.annotation.TargetApi;
+import android.app.NotificationChannel;
+import android.app.NotificationManager;
 import android.bluetooth.BluetoothAdapter;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
@@ -35,14 +38,17 @@ import android.widget.Toast;
 
 import com.example.project.MainActivity;
 import com.example.project.R;
+import com.example.project.UImain;
 import com.example.project.register.LoginActivity;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MarkerOptions;
+import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.iid.FirebaseInstanceId;
 
 import org.altbeacon.beacon.Beacon;
 import org.altbeacon.beacon.BeaconConsumer;
@@ -76,7 +82,6 @@ public class BeaconDetect extends AppCompatActivity implements BeaconConsumer{
         private ImageView iv;
     BluetoothAdapter mBlueAdapter;
     private static final int REQUEST_ENABLE_BT = 0;
-
 
     @Override
         protected void onCreate(Bundle savedInstanceState) {
@@ -207,6 +212,8 @@ public class BeaconDetect extends AppCompatActivity implements BeaconConsumer{
             beaconManager.bind(this);
         }
 
+
+
         @Override
         public void onBeaconServiceConnect() {
             beaconManager.addRangeNotifier(new RangeNotifier() {
@@ -238,6 +245,17 @@ public class BeaconDetect extends AppCompatActivity implements BeaconConsumer{
                             Log.i(TAG, "DidRangeBeaconsInRegion : " + beacons.toString());
 
                             iv=(ImageView) findViewById(R.id.imageView);
+
+                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                                // Create channel to show notifications.
+                                String channelId  = "default_notification_channel_id";
+                                String channelName = "default_notification_channel_name";
+                                NotificationManager notificationManager =
+                                        getSystemService(NotificationManager.class);
+                                notificationManager.createNotificationChannel(new NotificationChannel(channelId,
+                                        channelName, NotificationManager.IMPORTANCE_LOW));
+                            }
+
                             BitmapFactory.Options myOptions = null;
                             Bitmap bitmap= BitmapFactory.decodeResource(getResources(),R.drawable.map,myOptions);
                             final Bitmap w=Bitmap.createBitmap(bitmap);
@@ -253,18 +271,25 @@ public class BeaconDetect extends AppCompatActivity implements BeaconConsumer{
 
                             if(minor.equals("77"))
                             {
+                                Toast.makeText(BeaconDetect.this, "You are at 理工二館", Toast.LENGTH_SHORT).show();
                                 paint.setColor(Color.RED);
                                 canvas.drawCircle(1800,818,50, paint);
                                 iv.setImageBitmap(y);}
 
                             else if(minor.equals("23366"))
                             {
+                                Toast.makeText(BeaconDetect.this, "You are at 行雲莊", Toast.LENGTH_SHORT).show();
                                 paint.setColor(Color.RED);
-                                canvas.drawCircle(1725,775,25, paint);
-                                iv.setImageBitmap(y);}
+                                canvas.drawCircle(1700,775,50, paint);
+                                iv.setImageBitmap(y);
+
+
+                            }
                         }
                     }
                 }
+
+
             });
 
             try {

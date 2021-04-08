@@ -40,6 +40,7 @@ public class Recycler {
             mdate.setText(userdata.getDate());
             this.key=key;
         }
+
     }
 
     class adapter extends RecyclerView.Adapter<item>{
