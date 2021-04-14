@@ -21,6 +21,7 @@ import com.google.firebase.messaging.RemoteMessage;
 import java.util.Map;
 
 public class UImain extends FirebaseMessagingService {
+    private static final String TAG="UImain";
     public void onNewToken(String s) {
         super.onNewToken(s);
         Log.i("MyFirebaseService","token "+s);

@@ -21,14 +21,14 @@ import com.google.firebase.auth.AuthResult;
 import com.google.firebase.auth.FirebaseAuth;
 
 public class LoginActivity extends AppCompatActivity {
- private FirebaseAuth mAuth;
- private EditText emaillogin;
- private EditText passlogin;
- private Button loginbut;
- private Button regbutlog;
- private Button forgotpass;
- private CheckBox remember;
- private FirebaseAuth.AuthStateListener authStateListener;
+    private FirebaseAuth mAuth;
+    private EditText emaillogin;
+    private EditText passlogin;
+    private Button loginbut;
+    private Button regbutlog;
+    private Button forgotpass;
+    private CheckBox remember;
+    private FirebaseAuth.AuthStateListener authStateListener;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -39,37 +39,44 @@ public class LoginActivity extends AppCompatActivity {
         emaillogin=(EditText) findViewById(R.id.editemaillogin);
         passlogin=(EditText) findViewById(R.id.editpasslogin);
         loginbut=(Button) findViewById(R.id.butlogin);
+        remember=(CheckBox) findViewById(R.id.rememberme);
 
         SharedPreferences preferences= getSharedPreferences("checkbox", MODE_PRIVATE);
         String checkbox=preferences.getString("remember","");
+        String account2=preferences.getString("account2","");
+        String password2=preferences.getString("password2","");
         if(checkbox.equals("true")){
-            Intent intent = new Intent(LoginActivity.this, BeaconDetect.class);
-            startActivity(intent);
+            emaillogin.setText(account2);
+            passlogin.setText(password2);
+            remember.setChecked(true);
         }
-        if(checkbox.equals("false"))
+        else if(checkbox.equals("false"))
         {
             Toast.makeText(LoginActivity.this, "Please Login", Toast.LENGTH_SHORT).show();
+            remember.setChecked(false);
         }
 
-        remember=(CheckBox) findViewById(R.id.rememberme);
         remember.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                SharedPreferences preferences= getSharedPreferences("checkbox", MODE_PRIVATE);
+                SharedPreferences.Editor editor= preferences.edit();
                 if(buttonView.isChecked()){
-                    SharedPreferences preferences= getSharedPreferences("checkbox", MODE_PRIVATE);
-                    SharedPreferences.Editor editor= preferences.edit();
-                    editor.putString("remember", "true");
+                    editor.putString("remember","true");
+                    editor.putString("account2",emaillogin.getText().toString());
+                    editor.putString("password2",passlogin.getText().toString());
                     editor.apply();
                     Toast.makeText(LoginActivity.this, "Checked", Toast.LENGTH_SHORT).show();
                 }
 
                 else if(!buttonView.isChecked()){
-                    SharedPreferences preferences= getSharedPreferences("checkbox", MODE_PRIVATE);
-                    SharedPreferences.Editor editor= preferences.edit();
                     editor.putString("remember", "false");
+                    editor.remove("account2");
+                    editor.remove("password2");
                     editor.apply();
                     Toast.makeText(LoginActivity.this, "Unchecked", Toast.LENGTH_SHORT).show();
                 }
+                editor.commit();
             }
         });
 
@@ -82,18 +89,18 @@ public class LoginActivity extends AppCompatActivity {
                 if(emails.isEmpty()){
                     emaillogin.setError("Please Enter Email Address");
                     emaillogin.requestFocus();
-            }
+                }
 
-            else {
-                mAuth.sendPasswordResetEmail(emails).addOnCompleteListener(LoginActivity.this, (task) -> {
-                    if (!task.isSuccessful()){
-                        Toast.makeText(LoginActivity.this, "Unable to send reset email", Toast.LENGTH_LONG).show();
-                    }
-                    else{
-                        Toast.makeText(LoginActivity.this, "Reset link sent to your email", Toast.LENGTH_LONG).show();
-                    }
-                });
-            }
+                else {
+                    mAuth.sendPasswordResetEmail(emails).addOnCompleteListener(LoginActivity.this, (task) -> {
+                        if (!task.isSuccessful()){
+                            Toast.makeText(LoginActivity.this, "Unable to send reset email", Toast.LENGTH_LONG).show();
+                        }
+                        else{
+                            Toast.makeText(LoginActivity.this, "Reset link sent to your email", Toast.LENGTH_LONG).show();
+                        }
+                    });
+                }
             }
         });
 
@@ -109,6 +116,8 @@ public class LoginActivity extends AppCompatActivity {
         loginbut.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+
+
                 String emails=emaillogin.getText().toString();
                 String passwords=passlogin.getText().toString();
 
@@ -143,8 +152,8 @@ public class LoginActivity extends AppCompatActivity {
 
 
 
-                    }
                 }
+            }
 
         });
-}}
+    }}

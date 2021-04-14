@@ -1,18 +1,23 @@
 package com.example.project.Beacon;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
+import androidx.core.app.NotificationCompat;
 import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.RecyclerView;
 
 import android.Manifest;
 import android.annotation.TargetApi;
+import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
+import android.app.PendingIntent;
 import android.bluetooth.BluetoothAdapter;
+import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
@@ -22,6 +27,8 @@ import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
+import android.media.RingtoneManager;
+import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.RemoteException;
@@ -71,22 +78,33 @@ public class BeaconDetect extends AppCompatActivity implements BeaconConsumer{
         private BeaconManager beaconManager;
         private TextView datetimes;
         public BeaconLocationData beaconLocationData;
-    private static final int PERMISSION_REQUEST_COARSE_LOCATION = 1;
-    private static final int PERMISSION_REQUEST_FINE_LOCATION = 1;
-    private static final int PERMISSION_REQUEST_BACKGROUND_LOCATION = 2;
         public static final String FILTER_UUID ="FDA50693-A4E2-4FB1-AFCF-C6EB07647825";
         private static final String IBEACON_FORMAT = "m:2-3=0215,i:4-19,i:20-21,i:22-23,p:24-24";
         DatabaseReference databaseReference;
         private Button logoutt;
         private Button vdata;
         private ImageView iv;
-    BluetoothAdapter mBlueAdapter;
-    private static final int REQUEST_ENABLE_BT = 0;
+        BluetoothAdapter mBlueAdapter;
+        private static final int REQUEST_ENABLE_BT = 0;
+        NotificationManager notificationManager;
+        NotificationChannel notificationChannel;
+        Context context=this;
+        private Button test;
 
     @Override
         protected void onCreate(Bundle savedInstanceState) {
             super.onCreate(savedInstanceState);
             setContentView(R.layout.activity_beacon_detect);
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            // Create channel to show notifications.
+            String channelId  = "default_notification_channel_id";
+            String channelName = "default_notification_channel_name";
+            NotificationManager notificationManager =
+                    getSystemService(NotificationManager.class);
+            notificationManager.createNotificationChannel(new NotificationChannel(channelId,
+                    channelName, NotificationManager.IMPORTANCE_HIGH));
+        }
 
             mBlueAdapter = BluetoothAdapter.getDefaultAdapter();
             if (!mBlueAdapter.isEnabled()){
@@ -164,12 +182,10 @@ public class BeaconDetect extends AppCompatActivity implements BeaconConsumer{
         switch (requestCode) {
             case REQUEST_ENABLE_BT:
                 if (resultCode == RESULT_OK) {
-                    //bluetooth is on
-
                     showToast("Bluetooth is on");
                 }
                 else {
-                    showToast("Bluetooth is not open");
+                    showToast("Bluetooth is not on");
                     return;
                 }
                 break;
@@ -183,7 +199,7 @@ public class BeaconDetect extends AppCompatActivity implements BeaconConsumer{
                 @Override
                 public void onClick(View v) {
                     if (!mBlueAdapter.isEnabled()){
-                        showToast("please turn on Bluetooth");
+                        showToast("Please Turn on Bluetooth");
                         Intent x = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
                         startActivityForResult(x,REQUEST_ENABLE_BT);
                     }
@@ -211,8 +227,6 @@ public class BeaconDetect extends AppCompatActivity implements BeaconConsumer{
             beaconManager.getBeaconParsers().add(new BeaconParser().setBeaconLayout(IBEACON_FORMAT));
             beaconManager.bind(this);
         }
-
-
 
         @Override
         public void onBeaconServiceConnect() {
@@ -246,15 +260,6 @@ public class BeaconDetect extends AppCompatActivity implements BeaconConsumer{
 
                             iv=(ImageView) findViewById(R.id.imageView);
 
-                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                                // Create channel to show notifications.
-                                String channelId  = "default_notification_channel_id";
-                                String channelName = "default_notification_channel_name";
-                                NotificationManager notificationManager =
-                                        getSystemService(NotificationManager.class);
-                                notificationManager.createNotificationChannel(new NotificationChannel(channelId,
-                                        channelName, NotificationManager.IMPORTANCE_LOW));
-                            }
 
                             BitmapFactory.Options myOptions = null;
                             Bitmap bitmap= BitmapFactory.decodeResource(getResources(),R.drawable.map,myOptions);
@@ -274,17 +279,34 @@ public class BeaconDetect extends AppCompatActivity implements BeaconConsumer{
                                 Toast.makeText(BeaconDetect.this, "You are at 理工二館", Toast.LENGTH_SHORT).show();
                                 paint.setColor(Color.RED);
                                 canvas.drawCircle(1800,818,50, paint);
-                                iv.setImageBitmap(y);}
+                                iv.setImageBitmap(y);
+                            }
 
                             else if(minor.equals("23366"))
                             {
-                                Toast.makeText(BeaconDetect.this, "You are at 行雲莊", Toast.LENGTH_SHORT).show();
+                               // Toast.makeText(BeaconDetect.this, "You are at 行雲莊", Toast.LENGTH_SHORT).show();
+                                Intent intent=new Intent(context, BeaconDetect.class);
+                                intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+                                PendingIntent pendingIntent=PendingIntent.getActivity(context, 0, intent, PendingIntent.FLAG_ONE_SHOT);
+
+                                String channelId="default_notification_channel_id";
+                                Uri defaultSoundUri= RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION);
+                                NotificationCompat.Builder notificationBuilder=new NotificationCompat.Builder(context, channelId)
+                                        .setSmallIcon(R.mipmap.ic_launcher)
+                                        .setContentTitle("目前位置")
+                                        .setContentText("行雲莊")
+                                        .setAutoCancel(true)
+                                        .setSound(defaultSoundUri)
+                                        .setContentIntent(pendingIntent);
+                                notificationManager=(NotificationManager) getSystemService(NOTIFICATION_SERVICE);
+                                notificationManager.notify(0 , notificationBuilder.build());
+
                                 paint.setColor(Color.RED);
                                 canvas.drawCircle(1700,775,50, paint);
                                 iv.setImageBitmap(y);
-
-
                             }
+
+
                         }
                     }
                 }
@@ -299,7 +321,6 @@ public class BeaconDetect extends AppCompatActivity implements BeaconConsumer{
                 e.printStackTrace();
             }
         }
-
 
       private void updateTextview(final String location){
             runOnUiThread(new Runnable() {
@@ -336,6 +357,5 @@ public class BeaconDetect extends AppCompatActivity implements BeaconConsumer{
     private void showToast(String msg){
         Toast.makeText(this, msg, Toast.LENGTH_SHORT).show();
     }
-
 
 }

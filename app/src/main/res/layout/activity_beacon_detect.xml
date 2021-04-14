@@ -10,6 +10,7 @@
     <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content">
+
     <androidx.appcompat.widget.Toolbar
         android:id="@+id/toolbar"
         android:layout_width="match_parent"
@@ -124,19 +125,16 @@
         app:layout_constraintTop_toBottomOf="@id/header_container" />
     <!-- app:srcCompat="@drawable/map" -->
 
-    <!-- List of other beacon informations -->
-    <!--  <androidx.recyclerview.widget.RecyclerView
-              android:id="@+id/infos_rv"
-              android:layout_width="match_parent"
-              android:layout_height="wrap_content"
-              android:layout_alignParentStart="true"
-              android:clipToPadding="false"
-              android:overScrollMode="never"
-              android:paddingBottom="16dp"
-              app:layout_constraintEnd_toEndOf="parent"
-              app:layout_constraintHorizontal_bias="0.0"
-              app:layout_constraintStart_toStartOf="parent"
-              tools:layout_editor_absoluteY="175dp"
-              tools:ignore="MissingConstraints" /> -->
+       <!-- <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/infos_rv"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                app:layout_constraintTop_toBottomOf="@+id/imageView"
+                app:layout_constraintEnd_toEndOf="parent"
+                /> -->
+
     </androidx.constraintlayout.widget.ConstraintLayout>
+
+
+
 </ScrollView>
