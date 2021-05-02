@@ -1,17 +1,13 @@
 package com.example.project.Beacon;
 
 import androidx.annotation.NonNull;
-import androidx.annotation.RequiresApi;
-import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.app.NotificationCompat;
 import androidx.core.content.ContextCompat;
-import androidx.recyclerview.widget.RecyclerView;
 
 import android.Manifest;
-import android.annotation.TargetApi;
 import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
@@ -21,41 +17,41 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
-import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Color;
+import android.graphics.Matrix;
 import android.graphics.Paint;
+import android.graphics.Typeface;
 import android.media.RingtoneManager;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.RemoteException;
 import android.util.Log;
-import android.view.Menu;
-import android.view.MenuItem;
+import android.view.MotionEvent;
+import android.view.ScaleGestureDetector;
 import android.view.View;
-import android.widget.ActionMenuView;
+import android.view.animation.Animation;
+import android.view.animation.AnimationUtils;
 import android.widget.Button;
 import android.widget.ImageView;
-import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import com.example.project.MainActivity;
 import com.example.project.R;
-import com.example.project.UImain;
 import com.example.project.register.LoginActivity;
-import com.google.android.gms.maps.CameraUpdateFactory;
-import com.google.android.gms.maps.GoogleMap;
-import com.google.android.gms.maps.model.LatLng;
-import com.google.android.gms.maps.model.MarkerOptions;
-import com.google.android.gms.tasks.OnCompleteListener;
+import com.example.project.register.SignUpActivity;
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
-import com.google.firebase.iid.FirebaseInstanceId;
+import com.google.firebase.database.ValueEventListener;
+import com.squareup.picasso.Picasso;
 
 import org.altbeacon.beacon.Beacon;
 import org.altbeacon.beacon.BeaconConsumer;
@@ -65,7 +61,6 @@ import org.altbeacon.beacon.RangeNotifier;
 import org.altbeacon.beacon.Region;
 
 import java.text.SimpleDateFormat;
-import java.util.Calendar;
 import java.util.Collection;
 import java.util.Date;
 
@@ -87,38 +82,35 @@ public class BeaconDetect extends AppCompatActivity implements BeaconConsumer{
         BluetoothAdapter mBlueAdapter;
         private static final int REQUEST_ENABLE_BT = 0;
         NotificationManager notificationManager;
-        NotificationChannel notificationChannel;
         Context context=this;
-        private Button test;
+        private TextView tv;
+        private ImageView image;
+        SignUpActivity signUpActivity;
+        private float scale;
+        private float beforescale=1.0f;
+        NotificationChannel channelId;
 
     @Override
         protected void onCreate(Bundle savedInstanceState) {
             super.onCreate(savedInstanceState);
             setContentView(R.layout.activity_beacon_detect);
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            // Create channel to show notifications.
-            String channelId  = "default_notification_channel_id";
-            String channelName = "default_notification_channel_name";
-            NotificationManager notificationManager =
-                    getSystemService(NotificationManager.class);
-            notificationManager.createNotificationChannel(new NotificationChannel(channelId,
-                    channelName, NotificationManager.IMPORTANCE_HIGH));
-        }
+             iv=(ImageView) findViewById(R.id.imageView);
+             iv.setImageResource(R.drawable.map);
 
             mBlueAdapter = BluetoothAdapter.getDefaultAdapter();
             if (!mBlueAdapter.isEnabled()){
                 showToast("please turn on Bluetooth");
-            Intent intent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
-            startActivityForResult(intent,REQUEST_ENABLE_BT);
+                Intent intent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
+                startActivityForResult(intent,REQUEST_ENABLE_BT);
              }
-
             permission();
             logoutact();
             initview();
             initbeacon();
             initdata();
             viewdata();
+
         }
 
         private void permission() {
@@ -148,7 +140,8 @@ public class BeaconDetect extends AppCompatActivity implements BeaconConsumer{
             }
         }
     }
-        private void logoutact(){
+
+    private void logoutact(){
             logoutt=(Button) findViewById(R.id.butonlogout);
             Intent in = getIntent();
             String string = in.getStringExtra("message");
@@ -176,7 +169,7 @@ public class BeaconDetect extends AppCompatActivity implements BeaconConsumer{
                     alert11.show();
                 }
             });
-        }
+    }
 
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         switch (requestCode) {
@@ -193,7 +186,7 @@ public class BeaconDetect extends AppCompatActivity implements BeaconConsumer{
         super.onActivityResult(requestCode, resultCode, data);
     }
 
-        private void viewdata(){
+    private void viewdata(){
             vdata=(Button) findViewById(R.id.buttonview);
             vdata.setOnClickListener(new View.OnClickListener() {
                 @Override
@@ -203,23 +196,42 @@ public class BeaconDetect extends AppCompatActivity implements BeaconConsumer{
                         Intent x = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
                         startActivityForResult(x,REQUEST_ENABLE_BT);
                     }
-
                     else{
                         Intent intent=new Intent(BeaconDetect.this, beacondata.class);
                         startActivity(intent);
                     }
                 }
             });
-        }
+    }
 
-       private void initview(){
+    private void sendNotification(String message){
+        notificationManager=(NotificationManager) getSystemService(NOTIFICATION_SERVICE);
+        channelId=new NotificationChannel("ID","test", NotificationManager.IMPORTANCE_MIN);
+        notificationManager.createNotificationChannel(channelId);
+
+        Intent intent=new Intent(context, BeaconDetect.class);
+        intent.setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP);
+        PendingIntent pendingIntent=PendingIntent.getActivity(context, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
+        Notification.Builder builder= new Notification.Builder(context);
+        builder.setSmallIcon(R.mipmap.ic_launcher)
+                .setChannelId("ID")
+                .setContentTitle("現在位置")
+                .setContentText(message)
+                .setAutoCancel(true)
+                .setContentIntent(pendingIntent);
+        Notification notification=builder.build();
+        notificationManager.notify(0,notification);
+    }
+
+    private void initview(){
             beacontype=(TextView) findViewById(R.id.beacon_type);
             distancee = (TextView) findViewById(R.id.distance);
             datetimes=(TextView) findViewById(R.id.last_seen);
-        }
+    }
 
-        private void initdata(){
+    private void initdata(){
             beaconLocationData = new BeaconLocationData();
+            signUpActivity=new SignUpActivity();
         }
 
         private void initbeacon(){
@@ -239,10 +251,12 @@ public class BeaconDetect extends AppCompatActivity implements BeaconConsumer{
                             String major = String.valueOf(b.getId2());
                             String minor = String.valueOf(b.getId3());
 
+
                             String distance=String.format("%.2f", b.getDistance());
                             updateTextviewx(distance);
+                            Log.i(TAG, "DidRangeBeaconsInRegion : " + beacons.toString());
 
-                           String location = beaconLocationData.getLocation(major, minor);
+                            String location = beaconLocationData.getLocation(major, minor);
                            updateTextview(location);
 
                             SimpleDateFormat simpleDateFormat=new SimpleDateFormat("yyyy/MM/dd HH:mm");
@@ -250,68 +264,153 @@ public class BeaconDetect extends AppCompatActivity implements BeaconConsumer{
                             Log.d("myLog", simpleDateFormat.toString());
                             updateTextviewxx(formattedDate);
 
-                            FirebaseDatabase.getInstance();
-                            databaseReference=FirebaseDatabase.getInstance().getReference(uuid).child(minor).child("minors");
+                            FirebaseUser user= FirebaseAuth.getInstance().getCurrentUser();
+                            databaseReference=FirebaseDatabase.getInstance().getReference(user.getUid()).child(minor).child("minors");
                             databaseReference.setValue(location);
-                            databaseReference=FirebaseDatabase.getInstance().getReference(uuid).child(minor).child("date");
+                            databaseReference=FirebaseDatabase.getInstance().getReference(user.getUid()).child(minor).child("date");
                             databaseReference.setValue(formattedDate);
-
-                            Log.i(TAG, "DidRangeBeaconsInRegion : " + beacons.toString());
+                            databaseReference=FirebaseDatabase.getInstance().getReference(user.getUid()).child(minor).child("emails");
+                            databaseReference.setValue(user.getEmail());
 
                             iv=(ImageView) findViewById(R.id.imageView);
-
-
                             BitmapFactory.Options myOptions = null;
                             Bitmap bitmap= BitmapFactory.decodeResource(getResources(),R.drawable.map,myOptions);
                             final Bitmap w=Bitmap.createBitmap(bitmap);
                             final Bitmap y=w.copy(Bitmap.Config.ARGB_8888,true);
-                            int height= bitmap.getHeight();
-                            int width= bitmap.getWidth();
-                            Log.e("圖片大小 ","width: "+width+"height "+height);
+
+
+                           // int height= bitmap.getHeight();
+                           // int width= bitmap.getWidth();
+                           // Log.e("圖片大小 ","width: "+width+"height "+height);
 
                             final Canvas canvas=new Canvas(y);
                             final Paint paint=new Paint();
                             paint.setStrokeWidth(10);
                             paint.setStyle(Paint.Style.FILL);
 
+                            tv=(TextView)findViewById(R.id.infos_rv);
+                            Typeface type = Typeface.createFromAsset(tv.getContext().getAssets(), "HanyiSentyChalk2018.ttf");
+                            tv.setTypeface(type);
+                            image=(ImageView)findViewById(R.id.photo);
+
                             if(minor.equals("77"))
                             {
-                                Toast.makeText(BeaconDetect.this, "You are at 理工二館", Toast.LENGTH_SHORT).show();
+                                sendNotification("理工二館");
                                 paint.setColor(Color.RED);
-                                canvas.drawCircle(1800,818,50, paint);
+                                canvas.drawCircle(1404,895,50, paint);
                                 iv.setImageBitmap(y);
+
+                                databaseReference = FirebaseDatabase.getInstance().getReference(uuid).child(minor).child("introduction");
+                                databaseReference.addValueEventListener(new ValueEventListener() {
+                                    @Override
+                                    public void onDataChange(@NonNull DataSnapshot snapshot) {
+                                        if (snapshot.exists()) {
+                                            String data = snapshot.getValue().toString();
+                                            data = data.replace("_b", "\n");
+                                            tv.setText(data);
+                                        }
+                                    }
+                                    @Override
+                                    public void onCancelled(@NonNull DatabaseError error) {
+                                    }
+                                });
+
+                                databaseReference = FirebaseDatabase.getInstance().getReference(uuid).child(minor).child("image");
+                                databaseReference.addValueEventListener(new ValueEventListener() {
+                                    @Override
+                                    public void onDataChange(@NonNull DataSnapshot snapshot) {
+                                        if (snapshot.exists()) {
+                                            String data = snapshot.getValue().toString();
+                                            Picasso.get().load(data).into(image);
+                                        }
+                                    }
+
+                                    @Override
+                                    public void onCancelled(@NonNull DatabaseError error) {
+                                    }
+                                });
                             }
 
                             else if(minor.equals("23366"))
                             {
-                               // Toast.makeText(BeaconDetect.this, "You are at 行雲莊", Toast.LENGTH_SHORT).show();
-                                Intent intent=new Intent(context, BeaconDetect.class);
-                                intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
-                                PendingIntent pendingIntent=PendingIntent.getActivity(context, 0, intent, PendingIntent.FLAG_ONE_SHOT);
-
-                                String channelId="default_notification_channel_id";
-                                Uri defaultSoundUri= RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION);
-                                NotificationCompat.Builder notificationBuilder=new NotificationCompat.Builder(context, channelId)
-                                        .setSmallIcon(R.mipmap.ic_launcher)
-                                        .setContentTitle("目前位置")
-                                        .setContentText("行雲莊")
-                                        .setAutoCancel(true)
-                                        .setSound(defaultSoundUri)
-                                        .setContentIntent(pendingIntent);
-                                notificationManager=(NotificationManager) getSystemService(NOTIFICATION_SERVICE);
-                                notificationManager.notify(0 , notificationBuilder.build());
-
+                                sendNotification("集賢館");
                                 paint.setColor(Color.RED);
-                                canvas.drawCircle(1700,775,50, paint);
+                                canvas.drawCircle(1782,767,50, paint);
                                 iv.setImageBitmap(y);
+
+                                databaseReference = FirebaseDatabase.getInstance().getReference(uuid).child(minor).child("introduction");
+                                databaseReference.addValueEventListener(new ValueEventListener() {
+                                    @Override
+                                    public void onDataChange(@NonNull DataSnapshot snapshot) {
+                                        if (snapshot.exists()) {
+                                            String data = snapshot.getValue().toString();
+                                            data = data.replace("_b", "\n");
+                                            tv.setText(data);
+                                        }
+                                    }
+
+                                    @Override
+                                    public void onCancelled(@NonNull DatabaseError error) {
+                                    }
+                                });
+
+                                databaseReference = FirebaseDatabase.getInstance().getReference(uuid).child(minor).child("image");
+                                databaseReference.addValueEventListener(new ValueEventListener() {
+                                    @Override
+                                    public void onDataChange(@NonNull DataSnapshot snapshot) {
+                                        if (snapshot.exists()) {
+                                            String data = snapshot.getValue().toString();
+                                            Picasso.get().load(data).into(image);
+                                        }
+                                    }
+
+                                    @Override
+                                    public void onCancelled(@NonNull DatabaseError error) {
+                                    }
+                                });
                             }
 
+                            else if(minor.equals("2626"))
+                            {
+                                sendNotification("管理學院");
+                                paint.setColor(Color.RED);
+                                canvas.drawCircle(926,895,50, paint);
+                                iv.setImageBitmap(y);
 
+                                databaseReference = FirebaseDatabase.getInstance().getReference(uuid).child(minor).child("introduction");
+                                databaseReference.addValueEventListener(new ValueEventListener() {
+                                    @Override
+                                    public void onDataChange(@NonNull DataSnapshot snapshot) {
+                                        if (snapshot.exists()) {
+                                            String data = snapshot.getValue().toString();
+                                            data = data.replace("_b", "\n");
+                                            tv.setText(data);
+                                        }
+                                    }
+
+                                    @Override
+                                    public void onCancelled(@NonNull DatabaseError error) {
+                                    }
+                                });
+
+                                databaseReference = FirebaseDatabase.getInstance().getReference(uuid).child(minor).child("image");
+                                databaseReference.addValueEventListener(new ValueEventListener() {
+                                    @Override
+                                    public void onDataChange(@NonNull DataSnapshot snapshot) {
+                                        if (snapshot.exists()) {
+                                            String data = snapshot.getValue().toString();
+                                            Picasso.get().load(data).into(image);
+                                        }
+                                    }
+
+                                    @Override
+                                    public void onCancelled(@NonNull DatabaseError error) {
+                                    }
+                                });
+                            }
                         }
                     }
                 }
-
-
             });
 
             try {
@@ -357,5 +456,4 @@ public class BeaconDetect extends AppCompatActivity implements BeaconConsumer{
     private void showToast(String msg){
         Toast.makeText(this, msg, Toast.LENGTH_SHORT).show();
     }
-
 }

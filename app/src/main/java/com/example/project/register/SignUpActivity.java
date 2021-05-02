@@ -2,6 +2,7 @@ package com.example.project.register;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
@@ -17,19 +18,19 @@ import com.google.firebase.auth.AuthResult;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.auth.UserProfileChangeRequest;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
 
 public class SignUpActivity extends AppCompatActivity {
+    protected static final String TAG = "SignUpActivity";
     private FirebaseAuth mAuth;
     private FirebaseAuth.AuthStateListener mAuthListener;
     private EditText emailedit;
     private EditText useredit;
     private  EditText passedit;
     private Button signupbut;
-    private FirebaseUser user;
-    private String emails;
-    private String passwords;
-    private String phones;
     private Button loginbutreg;
+    DatabaseReference databaseReference;
 
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -58,19 +59,22 @@ public class SignUpActivity extends AppCompatActivity {
 
                 if(emails.isEmpty())
                 {
-                    emailedit.setError("Invalid Email");
+                    emailedit.setError("Email is required");
                     emailedit.requestFocus();
                 }
 
                 if(passwords.isEmpty()){
-                    passedit.setError("Please Enter Password");
+                    passedit.setError("Password is requires");
                     passedit.requestFocus();
                 }
 
-                else  if(emails.isEmpty() && passwords.isEmpty()){
+                if(users.isEmpty()){
+                    useredit.setError("Username is required");
+                    useredit.requestFocus();
+                }
 
+                else  if(emails.isEmpty() && passwords.isEmpty() && users.isEmpty()){
                     Toast.makeText(SignUpActivity.this,"Fields Are Empty!",Toast.LENGTH_SHORT).show();
-
                 }
 
                 else{
@@ -80,6 +84,13 @@ public class SignUpActivity extends AppCompatActivity {
                             public void onComplete(@NonNull Task<AuthResult> task) {
                                 if (task.isSuccessful()) {
                                     FirebaseUser user = mAuth.getCurrentUser();
+
+                                    if(user!=null){
+                                        Log.d(TAG,"userid"+user.getUid());
+                                    }
+
+                                    FirebaseDatabase.getInstance();
+
                                     UserProfileChangeRequest profileUpdates = new UserProfileChangeRequest.Builder()
                                             .setDisplayName(users).build();
 
@@ -87,11 +98,9 @@ public class SignUpActivity extends AppCompatActivity {
                                         @Override
                                         public void onComplete(@NonNull Task<Void> task) {
                                             if (task.isSuccessful()) {
-                                                Toast.makeText(SignUpActivity.this, "username stored successful", Toast.LENGTH_LONG).show();
                                             }
                                         }
                                     });
-
                                     startActivity(new Intent(SignUpActivity.this, LoginActivity.class));
                                     Toast.makeText(SignUpActivity.this, "Registration is successful", Toast.LENGTH_SHORT).show();
 

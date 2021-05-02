@@ -13,9 +13,11 @@ public class BeaconLocationData {
   private void initLocationData() {
        Map<String, String> minorLocations = new HashMap<>();
        minorLocations.put("77", "理工二館");
-       minorLocations.put("23366", "行雲莊");
+       minorLocations.put("23366", "集賢館");
+        minorLocations.put("2626", "管理學院");
        locations.put("10001", minorLocations);
        locations.put("10001", minorLocations);
+      locations.put("10001", minorLocations);
    }
 
     public String getLocation(String major, String minor){

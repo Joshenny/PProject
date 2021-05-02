@@ -5,7 +5,8 @@
     android:id="@+id/map"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical">
+    android:orientation="vertical"
+    android:background="#FFFFF4">
 
     <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
@@ -15,7 +16,7 @@
         android:id="@+id/toolbar"
         android:layout_width="match_parent"
         android:layout_height="?attr/actionBarSize"
-        android:background="?attr/colorPrimary"
+        android:background="#3F52BA"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
         app:popupTheme="@style/Theme.Project.PopupOverlay" />
@@ -24,10 +25,13 @@
         android:id="@+id/buttonview"
         android:layout_width="90dp"
         android:layout_height="55dp"
-        android:text="@string/view_data"
+        android:text="View level"
         android:textSize="12sp"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+        app:layout_constraintTop_toTopOf="parent"
+        android:background="@drawable/shape2"
+        android:textColor="#FFFFFF"
+        app:backgroundTint="#3F52BA"/>
 
         <Button
             android:id="@+id/butonlogout"
@@ -38,7 +42,10 @@
             android:textSize="12sp"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toEndOf="@+id/buttonview"
-            app:layout_constraintTop_toTopOf="parent" />
+            app:layout_constraintTop_toTopOf="parent"
+            android:background="@drawable/shape2"
+            android:textColor="#FFFFFF"
+            app:backgroundTint="#3F52BA"/>
 
         <androidx.constraintlayout.widget.ConstraintLayout
             android:id="@+id/header_container"
@@ -111,30 +118,47 @@
 
         </androidx.constraintlayout.widget.ConstraintLayout>
 
+         <com.zolad.zoominimageview.ZoomInImageView
+            android:id="@+id/imageView"
+            android:layout_width="match_parent"
+            android:layout_height="300dp"
+             android:contentDescription="@string/todo"
+            app:layout_constraintTop_toBottomOf="@id/header_container"
+        />
 
-    <ImageView
-        android:id="@+id/imageView"
-        android:layout_width="match_parent"
-        android:layout_height="400dp"
-        android:layout_marginStart="1dp"
-        android:layout_marginTop="1dp"
-        android:layout_marginEnd="1dp"
-        android:contentDescription="@string/todo"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/header_container" />
+       <!-- <ImageView
+            android:id="@+id/imageView"
+            android:layout_width="match_parent"
+            android:layout_height="350dp"
+            android:clickable="true"
+            app:layout_constraintTop_toBottomOf="@id/header_container" /> -->
     <!-- app:srcCompat="@drawable/map" -->
 
-       <!-- <androidx.recyclerview.widget.RecyclerView
-                android:id="@+id/infos_rv"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                app:layout_constraintTop_toBottomOf="@+id/imageView"
-                app:layout_constraintEnd_toEndOf="parent"
-                /> -->
+        <View
+            android:layout_width="wrap_content"
+            android:layout_height="1dp"
+            android:background="@color/black"
+            app:layout_constraintBottom_toBottomOf="@id/imageView"
+            app:layout_constraintTop_toBottomOf="@+id/imageView"
+            tools:ignore="MissingConstraints" />
+
+        <ImageView
+            android:id="@+id/photo"
+            android:layout_width="match_parent"
+            android:layout_height="300dp"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/imageView"
+            app:layout_constraintVertical_bias="0.0"
+            android:contentDescription="@string/todo" />
+
+
+        <TextView
+            android:id="@+id/infos_rv"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:text="@string/test"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/photo"/>
 
     </androidx.constraintlayout.widget.ConstraintLayout>
-
-
-
 </ScrollView>

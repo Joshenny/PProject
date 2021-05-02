@@ -25,5 +25,9 @@
     <string name="logout">Logout</string>
     <string name="view_data">View Data</string>
     <string name="m">m</string>
+    <string name="login">login</string>
+    <string name="signup">signup</string>
+    <string name="view_level" />
+    <string name="test">test</string>
     <string name="todo">TODO</string>
 </resources>

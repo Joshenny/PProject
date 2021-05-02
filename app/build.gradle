@@ -61,4 +61,7 @@ dependencies {
     implementation platform('com.google.firebase:firebase-bom:26.5.0')
     implementation 'com.google.firebase:firebase-analytics'
 
+    implementation 'com.google.firebase:firebase-database:19.6.0'
+    implementation 'com.squareup.picasso:picasso:2.71828'
+    implementation 'com.zolad:zoominimageview:1.0.0'
 }

@@ -3,6 +3,7 @@ package com.example.project.register;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.CheckBox;
@@ -19,8 +20,13 @@ import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.AuthResult;
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.core.Tag;
 
 public class LoginActivity extends AppCompatActivity {
+    protected static final String TAG = "LoginActivity";
     private FirebaseAuth mAuth;
     private EditText emaillogin;
     private EditText passlogin;
@@ -28,57 +34,39 @@ public class LoginActivity extends AppCompatActivity {
     private Button regbutlog;
     private Button forgotpass;
     private CheckBox remember;
+    private SharedPreferences sharedPreferences;
+    private static final String PREFS_NAME="Presfile";
     private FirebaseAuth.AuthStateListener authStateListener;
+    DatabaseReference databaseReference;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_login);
 
+        sharedPreferences=getSharedPreferences(PREFS_NAME,MODE_PRIVATE);
         mAuth = FirebaseAuth.getInstance();
         emaillogin=(EditText) findViewById(R.id.editemaillogin);
         passlogin=(EditText) findViewById(R.id.editpasslogin);
         loginbut=(Button) findViewById(R.id.butlogin);
         remember=(CheckBox) findViewById(R.id.rememberme);
 
-        SharedPreferences preferences= getSharedPreferences("checkbox", MODE_PRIVATE);
-        String checkbox=preferences.getString("remember","");
-        String account2=preferences.getString("account2","");
-        String password2=preferences.getString("password2","");
-        if(checkbox.equals("true")){
-            emaillogin.setText(account2);
-            passlogin.setText(password2);
-            remember.setChecked(true);
-        }
-        else if(checkbox.equals("false"))
-        {
-            Toast.makeText(LoginActivity.this, "Please Login", Toast.LENGTH_SHORT).show();
-            remember.setChecked(false);
+
+        SharedPreferences sp=getSharedPreferences(PREFS_NAME,MODE_PRIVATE);
+        if(sp.contains("pref_name")){
+            String u=sp.getString("pref_name", "not found");
+            emaillogin.setText(u.toString());
         }
 
-        remember.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
-            @Override
-            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-                SharedPreferences preferences= getSharedPreferences("checkbox", MODE_PRIVATE);
-                SharedPreferences.Editor editor= preferences.edit();
-                if(buttonView.isChecked()){
-                    editor.putString("remember","true");
-                    editor.putString("account2",emaillogin.getText().toString());
-                    editor.putString("password2",passlogin.getText().toString());
-                    editor.apply();
-                    Toast.makeText(LoginActivity.this, "Checked", Toast.LENGTH_SHORT).show();
-                }
+        if(sp.contains("pref_pass")){
+            String u=sp.getString("pref_pass", "not found");
+            passlogin.setText(u.toString());
+        }
 
-                else if(!buttonView.isChecked()){
-                    editor.putString("remember", "false");
-                    editor.remove("account2");
-                    editor.remove("password2");
-                    editor.apply();
-                    Toast.makeText(LoginActivity.this, "Unchecked", Toast.LENGTH_SHORT).show();
-                }
-                editor.commit();
-            }
-        });
+        if(sp.contains("pref_check")){
+            Boolean b=sp.getBoolean("pref_check", false);
+            remember.setChecked(b);
+        }
 
         forgotpass=(Button) findViewById(R.id.butforgot);
         forgotpass.setOnClickListener(new View.OnClickListener() {
@@ -116,19 +104,17 @@ public class LoginActivity extends AppCompatActivity {
         loginbut.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-
-
                 String emails=emaillogin.getText().toString();
                 String passwords=passlogin.getText().toString();
 
                 if(emails.isEmpty()){
-                    emaillogin.setError("Please Enter Email Address");
+                    emaillogin.setError("Email is required");
                     emaillogin.requestFocus();
                 }
 
                 if(passwords.isEmpty())
                 {
-                    passlogin.setError("Please Enter Password");
+                    passlogin.setError("Password is required");
                     passlogin.requestFocus();
                 }
 
@@ -137,6 +123,19 @@ public class LoginActivity extends AppCompatActivity {
                 }
 
                 else{
+                    if(remember.isChecked()){
+                        Boolean boolIsChecked = remember.isChecked();
+                        SharedPreferences.Editor editor=sharedPreferences.edit();
+                        editor.putString("pref_name",emaillogin.getText().toString());
+                        editor.putString("pref_pass",passlogin.getText().toString());
+                        editor.putBoolean("pref_check", boolIsChecked);
+                        editor.apply();
+                    }
+
+                    else{
+                        sharedPreferences.edit().clear().apply();
+                    }
+
                     mAuth.signInWithEmailAndPassword(emails,passwords).addOnCompleteListener(LoginActivity.this, new OnCompleteListener<AuthResult>() {
                         @Override
                         public void onComplete(@NonNull Task<AuthResult> task) {
@@ -144,8 +143,16 @@ public class LoginActivity extends AppCompatActivity {
                                 Toast.makeText(LoginActivity.this, task.getException().getMessage(), Toast.LENGTH_SHORT).show();
                             }
                             else{
-                                Intent intent = new Intent(LoginActivity.this, BeaconDetect.class);
-                                startActivity(intent);
+                                FirebaseUser user = mAuth.getCurrentUser();
+                                if(user!=null){
+                                    Log.d(TAG,"userid: "+user.getUid());
+                                }
+
+
+                                Toast.makeText(LoginActivity.this, "Login in successfully", Toast.LENGTH_SHORT).show();
+                                startActivity(new Intent(getApplicationContext(), BeaconDetect.class));
+                                //Intent intent = new Intent(LoginActivity.this, BeaconDetect.class);
+                                //startActivity(intent);
                             }
                         }
                     });
